@@ -1,24 +1,35 @@
 package com.authtoken.authtoken.controller;
 
-import com.authtoken.authtoken.entity.AuthRequest;
+import com.authtoken.authtoken.dto.AuthRequest;
+import com.authtoken.authtoken.dto.SignUpDto;
+import com.authtoken.authtoken.dto.UserDTO;
+import com.authtoken.authtoken.dto.UserResponseDTO;
 import com.authtoken.authtoken.entity.UserInfo;
+import com.authtoken.authtoken.repository.UserInfoRepository;
 import com.authtoken.authtoken.service.JwtService;
 import com.authtoken.authtoken.service.UserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Optional;
+
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/v1/auth")
 public class UserController {
 
     @Autowired
     private UserInfoService service;
 
+    @Autowired
+    private UserInfoRepository userInfoRepository;
     @Autowired
     private JwtService jwtService;
 
@@ -27,34 +38,37 @@ public class UserController {
 
     @GetMapping("/welcome")
     public String welcome() {
-        return "Welcome this endpoint is not secure";
+        return "Welcome to the Hiring Box";
     }
 
-    @PostMapping("/addNewUser")
-    public String addNewUser(@RequestBody UserInfo userInfo) {
-        return service.addUser(userInfo);
+    @PostMapping("/sign-up")
+    public ResponseEntity signUp(@RequestBody SignUpDto signUpDto) {
+        String result = service.signUp(signUpDto);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @GetMapping("/user/userProfile")
-    @PreAuthorize("hasAuthority('ROLE_USER')")
-    public String userProfile() {
-        return "Welcome to User Profile";
-    }
+    @PostMapping("/login")
+    public UserResponseDTO login(@RequestBody AuthRequest authRequest) {
+//        UserResponseDTO userResponseDTO = service.login(authRequest);
+//        return new ResponseEntity<>(userResponseDTO, HttpStatus.OK);
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
+        Optional<UserInfo> existingUser = userInfoRepository.findByEmail(authRequest.getEmail());
+        if (authentication.isAuthenticated()){
+            UserResponseDTO userResponseDTO = new UserResponseDTO();
+            userResponseDTO.setEmail(existingUser.get().getEmail());
+            userResponseDTO.setToken(jwtService.generateToken(existingUser.get().getFullName()));
+            userResponseDTO.setRoles(Collections.singletonList(existingUser.get().getRoles().toUpperCase().replaceAll(" ","_")));
 
-    @GetMapping("/admin/adminProfile")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public String adminProfile() {
-        return "Welcome to Admin Profile";
-    }
-
-    @PostMapping("/generateToken")
-    public String authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
-        if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(authRequest.getUsername());
+            return userResponseDTO;
         } else {
-            throw new UsernameNotFoundException("invalid user request !");
+            throw new RuntimeException("Invalid credentials");
         }
+    }
+
+    @PostMapping("/createUser")
+    public ResponseEntity createUser(@ModelAttribute UserDTO userDTO) throws IOException {
+        String answer = service.createUser(userDTO);
+        return new ResponseEntity<>(answer,HttpStatus.OK);
     }
 
 }

@@ -25,7 +25,7 @@ public class JwtService {
 //        Map<String, Object> claims = new HashMap<>();
 //        return createToken(claims, userName);
         Map<String, Object> claims = new HashMap<>();
-        Optional<UserInfo> user = userInfoRepository.findByName(userName);
+        Optional<UserInfo> user = userInfoRepository.findByFullName(userName);
 
         claims.put("roles", Arrays.asList(user.get().getRoles()));
         return createToken(claims, userName);
