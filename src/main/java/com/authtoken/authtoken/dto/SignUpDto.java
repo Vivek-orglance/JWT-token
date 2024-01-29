@@ -5,13 +5,14 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import org.bson.types.ObjectId;
 
 import java.util.regex.Pattern;
 
 @Data
 public class SignUpDto {
 
-    private Long id;
+    private ObjectId id;
 
     @NotEmpty(message = "fullName is required")
     private String fullName;

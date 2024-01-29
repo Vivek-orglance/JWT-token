@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @Data
 public class UserDTO {
 
-    private Long id;
+    private String id;
 
     private MultipartFile resume;
 

@@ -53,8 +53,8 @@ public class UserInfoService implements UserDetailsService {
 
     public String createUser(UserDTO userDTO) throws IOException {
 
-        Long userId = userDTO.getId();
-        UserInfo user = userInfoRepository.findById(Math.toIntExact(userId)).get();
+        String userId = String.valueOf(userDTO.getId());
+        UserInfo user = userInfoRepository.findById(userId).get();
 
         MultipartFile resumeFile = userDTO.getResume();
         MultipartFile avatarFile = userDTO.getAvatar();
